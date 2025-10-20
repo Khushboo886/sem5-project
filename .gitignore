@@ -1,0 +1,6 @@
+.DS_Store
+vendor/
+*.log
+.env
+assests/uploads/*
+!assests/uploads/.gitkeep
