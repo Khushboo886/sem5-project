@@ -1,7 +1,7 @@
 <?php
 $DB_HOST = '127.0.0.1';
 $DB_USER = 'root';
-$DB_PASS = ''; 
+$DB_PASS = '';
 $DB_NAME = 'cloudconnect_db';
 
 try {
@@ -11,3 +11,4 @@ try {
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
+?>
