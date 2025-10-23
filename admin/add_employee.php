@@ -2,64 +2,65 @@
 require_once '../includes/session.php';
 requireAdmin();  // Only admin can access this page
 require_once '../includes/db.php';
+include '../includes/header.php';
+include '../includes/sidebar.php';
 
 $errors = [];
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['name']);
+    $employee_name = trim($_POST['name']); // ✅ corrected variable name
     $email = trim($_POST['email']);
     $password = $_POST['password'];
-  // new fields
-  $employee_id = trim($_POST['employee_id'] ?? '');
-  $department = trim($_POST['department'] ?? '');
-  $position = trim($_POST['position'] ?? '');
-  $join_date = trim($_POST['join_date'] ?? '');
-  $phone = trim($_POST['phone'] ?? '');
-  $address = trim($_POST['address'] ?? '');
-  $emergency_contact = trim($_POST['emergency_contact'] ?? '');
-  $emergency_phone = trim($_POST['emergency_phone'] ?? '');
 
-  if (!$name || !$email || !$password) {
-    $errors[] = "Name, email and password are required.";
-  } else {
-    try {
-      $pdo->beginTransaction();
+    // new fields
+    $employee_id = trim($_POST['employee_id'] ?? '');
+    $department = trim($_POST['department'] ?? '');
+    $position = trim($_POST['position'] ?? '');
+    $join_date = trim($_POST['join_date'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+    $address = trim($_POST['address'] ?? '');
+    $emergency_contact = trim($_POST['emergency_contact'] ?? '');
+    $emergency_phone = trim($_POST['emergency_phone'] ?? '');
 
-      // insert into users
-      $hash = password_hash($password, PASSWORD_DEFAULT);
-      $stmt = $pdo->prepare("INSERT INTO users (company_id, name, email, password, role) VALUES (?, ?, ?, ?, 'Employee')");
-      $stmt->execute([$_SESSION['company_id'], $name, $email, $hash]);
-      $userId = $pdo->lastInsertId();
+    if (!$employee_name || !$email || !$password) {
+        $errors[] = "Employee name, email, and password are required.";
+    } else {
+        try {
+            $pdo->beginTransaction();
 
- // insert into existing employee_details table
-$ins = $pdo->prepare("INSERT INTO employee_details (user_id, employee_name, employee_id, department, position, join_date, phone, address, emergency_contact, emergency_phone) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            // insert into users
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare("INSERT INTO users (company_id, name, email, password, role) VALUES (?, ?, ?, ?, 'Employee')");
+            $stmt->execute([$_SESSION['company_id'], $employee_name, $email, $hash]);
+            $userId = $pdo->lastInsertId();
 
-$ins->execute([
-  $userId,
-  $employee_name ?: null,      // ✅ new field added
-  $employee_id ?: null,
-  $department ?: null,
-  $position ?: null,
-  $join_date ?: null,
-  $phone ?: null,
-  $address ?: null,
-  $emergency_contact ?: null,
-  $emergency_phone ?: null,
-]);
+            // insert into existing employee_details table
+            $ins = $pdo->prepare("INSERT INTO employee_details (user_id, employee_name, employee_id, department, position, join_date, phone, address, emergency_contact, emergency_phone) 
+                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $ins->execute([
+                $userId,
+                $employee_name ?: null,
+                $employee_id ?: null,
+                $department ?: null,
+                $position ?: null,
+                $join_date ?: null,
+                $phone ?: null,
+                $address ?: null,
+                $emergency_contact ?: null,
+                $emergency_phone ?: null,
+            ]);
 
-      $pdo->commit();
-      $success = "Employee added successfully!";
-    } catch (Exception $e) {
-      $pdo->rollBack();
-      $errors[] = "Error: " . $e->getMessage();
+            $pdo->commit();
+            $success = "Employee added successfully!";
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            $errors[] = "Error: " . $e->getMessage();
+        }
     }
-  }
 }
 ?>
 
-<?php include '../includes/header.php'; ?>
 <h2>Add Employee</h2>
 
 <?php if ($errors): ?>
