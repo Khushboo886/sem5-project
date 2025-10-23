@@ -91,3 +91,33 @@
 /* small visual tweaks for in-content headings */
 .cc-main h2{ color: #0b1f3a; font-weight:700; }
 
+/* Dashboard statistic cards — refined to match wireframe image */
+.cc-stats-grid{
+	display: grid;
+	grid-template-columns: repeat(2, 1fr); /* two columns for the 2x2 layout */
+	gap: 22px;
+	margin-top: 22px;
+}
+.cc-card{
+	background: #fff;
+	border-radius: 12px;
+	box-shadow: 0 10px 30px rgba(16,24,40,0.06);
+	padding: 22px 24px;
+	min-height: 140px;
+	display: flex;
+	align-items: center;
+}
+.cc-card-body{ display:flex; align-items:center; justify-content:space-between; width:100%; }
+.cc-card-left{ display:flex; flex-direction:column; }
+.cc-card-title{ color:#6b7280; font-size:14px; margin:0 0 8px 0; }
+.cc-card-value{ color: var(--cc-primary); font-size:42px; font-weight:800; line-height:1; }
+.cc-card-empty{ color:#94a3b8; font-size:20px; }
+
+/* Keep cards 2 columns on desktop, 2 columns on medium screens, 1 column on small screens */
+@media (max-width: 1100px){
+	.cc-stats-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 680px){
+	.cc-stats-grid{ grid-template-columns: 1fr; }
+}
+
