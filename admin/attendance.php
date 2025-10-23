@@ -3,7 +3,7 @@ require_once '../includes/session.php';
 requireAdmin();  // Only admin can access this page
 require_once '../includes/db.php';
 include '../includes/header.php';
-include '../includes/sidebar.php';
+include '../includes/admin_sidebar.php';
 
 // Fetch attendance records with employee names
 try {

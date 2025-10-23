@@ -19,14 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user && password_verify($password, $user['password'])) {
-        // ✅ Store session variables
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['company_id'] = $user['company_id'];
         $_SESSION['role'] = $user['role'];
         $_SESSION['name'] = $user['name'];
         $_SESSION['company_name'] = $user['company_name'];
 
-        // ✅ Redirect based on role
         if ($user['role'] === 'Admin') {
             header('Location: admin/dashboard.php');
         } else {
@@ -40,24 +38,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <?php include 'includes/header.php'; ?>
-<h2>Login</h2>
 
-<?php if ($errors): ?>
-  <div class="alert alert-danger"><?= implode('<br>', $errors) ?></div>
-<?php endif; ?>
+<style>
+  /* Make page full height and footer stick at bottom */
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
 
-<form method="post">
-  <div class="mb-3">
-    <label class="form-label">Email</label>
-    <input class="form-control" name="email" type="email" required>
-  </div>
+  /* Wrapper for content that pushes footer down */
+  .page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 64vh;
+  }
 
-  <div class="mb-3">
-    <label class="form-label">Password</label>
-    <input class="form-control" name="password" type="password" required>
-  </div>
+  main {
+    flex: 1; /* main content takes remaining space */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
 
-  <button class="btn btn-primary" type="submit">Login</button>
-</form>
+  .login-form {
+    width: 100%;
+    max-width: 400px;
+  }
+</style>
 
-<?php include 'includes/footer.php'; ?>
+<div class="page-wrapper">
+  <main>
+    <div class="login-form">
+      <h2 class="mb-4">Login</h2>
+
+      <?php if ($errors): ?>
+        <div class="alert alert-danger"><?= implode('<br>', $errors) ?></div>
+      <?php endif; ?>
+
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input class="form-control" name="email" type="email" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Password</label>
+          <input class="form-control" name="password" type="password" required>
+        </div>
+
+        <button class="btn btn-primary w-100" type="submit">Login</button>
+      </form>
+    </div>
+  </main>
+
+  <?php include 'includes/footer.php'; ?>
+</div>

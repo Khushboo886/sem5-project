@@ -4,7 +4,7 @@ requireAdmin();  // only admins can enter this page
 ?>
 
 <?php include '../includes/header.php'; ?>
-<?php include '../includes/sidebar.php'; ?>
+<?php include '../includes/admin_sidebar.php'; ?>
 <h2>Welcome, Admin <?= htmlspecialchars($_SESSION['name']) ?>!</h2>
 <p>This is your company admin dashboard.</p>
 
