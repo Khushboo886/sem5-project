@@ -18,8 +18,8 @@
                 <li><a href="add_employee.php">Employees</a></li>
                 <li><a href="attendance.php">Attendance</a></li>
                 <li><a href="leaves.php">Leaves</a></li>
-                <li><a href="accouncements.php">Announcements</a></li>
-                <li><a href="../document.php">Documents</a></li>
+                <li><a href="announcements.php">Announcements</a></li>
+                <li><a href="documents.php">Documents</a></li>
             </ul>
         </nav>
     </aside>
