@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/session.php';
-requireAdmin();  // Only admin can access this page
+requireAdmin(); // Only admin can access this page
 require_once '../includes/db.php';
 include '../includes/header.php';
 include '../includes/admin_sidebar.php';
@@ -9,7 +9,7 @@ $errors = [];
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $employee_name = trim($_POST['name']); // ✅ corrected variable name
+    $employee_name = trim($_POST['name']);
     $email = trim($_POST['email']);
     $password = $_POST['password'];
 
@@ -29,13 +29,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
-            // insert into users
             $hash = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare("INSERT INTO users (company_id, name, email, password, role) VALUES (?, ?, ?, ?, 'Employee')");
             $stmt->execute([$_SESSION['company_id'], $employee_name, $email, $hash]);
             $userId = $pdo->lastInsertId();
 
-            // insert into existing employee_details table
             $ins = $pdo->prepare("INSERT INTO employee_details (user_id, employee_name, employee_id, department, position, join_date, phone, address, emergency_contact, emergency_phone) 
                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $ins->execute([
@@ -61,73 +59,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<h2>Add Employee</h2>
+<main class="cc-main">
+  <h1 class="admin-dashboard-title">Add Employee</h1>
 
-<?php if ($errors): ?>
-  <div class="alert alert-danger"><?= implode('<br>', $errors) ?></div>
-<?php endif; ?>
+  <?php if ($errors): ?>
+    <div class="alert error"><?= implode('<br>', $errors) ?></div>
+  <?php endif; ?>
 
-<?php if ($success): ?>
-  <div class="alert alert-success"><?= $success ?></div>
-<?php endif; ?>
+  <?php if ($success): ?>
+    <div class="alert success"><?= $success ?></div>
+  <?php endif; ?>
 
-<form method="post">
-  <div class="mb-3">
-    <label class="form-label">Employee Name</label>
-    <input class="form-control" name="name" required>
-  </div>
+  <form method="post" class="employee-form">
+    <div class="form-grid">
+      <div>
+        <label>Employee Name</label>
+        <input type="text" name="name" required>
+      </div>
 
-  <div class="mb-3">
-    <label class="form-label">Email</label>
-    <input class="form-control" name="email" type="email" required>
-  </div>
+      <div>
+        <label>Email</label>
+        <input type="email" name="email" required>
+      </div>
 
-  <div class="mb-3">
-    <label class="form-label">Password</label>
-    <input class="form-control" name="password" type="password" required>
-  </div>
+      <div>
+        <label>Password</label>
+        <input type="password" name="password" required>
+      </div>
 
-  <div class="mb-3">
-    <label class="form-label">Employee ID</label>
-    <input class="form-control" name="employee_id">
-  </div>
+      <div>
+        <label>Employee ID</label>
+        <input type="text" name="employee_id">
+      </div>
 
-  <div class="mb-3">
-    <label class="form-label">Department</label>
-    <input class="form-control" name="department">
-  </div>
+      <div>
+        <label>Department</label>
+        <input type="text" name="department">
+      </div>
 
-  <div class="mb-3">
-    <label class="form-label">Position</label>
-    <input class="form-control" name="position">
-  </div>
+      <div>
+        <label>Position</label>
+        <input type="text" name="position">
+      </div>
 
-  <div class="mb-3">
-    <label class="form-label">Join Date</label>
-    <input class="form-control" name="join_date" type="date">
-  </div>
+      <div>
+        <label>Join Date</label>
+        <input type="date" name="join_date">
+      </div>
 
-  <div class="mb-3">
-    <label class="form-label">Phone</label>
-    <input class="form-control" name="phone">
-  </div>
+      <div>
+        <label>Phone</label>
+        <input type="text" name="phone">
+      </div>
 
-  <div class="mb-3">
-    <label class="form-label">Address</label>
-    <textarea class="form-control" name="address"></textarea>
-  </div>
+      <div class="full-width">
+        <label>Address</label>
+        <textarea name="address" rows="2"></textarea>
+      </div>
 
-  <div class="mb-3">
-    <label class="form-label">Emergency Contact</label>
-    <input class="form-control" name="emergency_contact">
-  </div>
+      <div>
+        <label>Emergency Contact</label>
+        <input type="text" name="emergency_contact">
+      </div>
 
-  <div class="mb-3">
-    <label class="form-label">Emergency Phone</label>
-    <input class="form-control" name="emergency_phone">
-  </div>
+      <div>
+        <label>Emergency Phone</label>
+        <input type="text" name="emergency_phone">
+      </div>
+    </div>
 
-  <button class="btn btn-primary" type="submit">Add Employee</button>
-</form>
+    <button type="submit" class="btn-primary">Add Employee</button>
+  </form>
+</main>
 
 <?php include '../includes/footer.php'; ?>

@@ -32,55 +32,188 @@ $stmt->execute([$_SESSION['company_id']]);
 $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<div class="main-content" style="margin-left:250px; padding:20px;">
-  <h2>Admin Dashboard &gt; Announcements</h2>
+<!-- ✅ Inline CSS -->
+<style>
+    .announcement-container {
+        background: #ffffff;
+        padding: 30px;
+        margin: 20px auto;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        max-width: 95%;
+    }
 
-  <div class="card" style="padding:20px; margin-top:20px; box-shadow:0 2px 6px rgba(0,0,0,0.1); border-radius:10px;">
+    .admin-dashboard-title {
+        font-size: 26px;
+        font-weight: 600;
+        color: #333;
+        text-align: center;
+        margin-bottom: 25px;
+    }
 
-    <?php if ($errors): ?>
-      <div class="alert alert-danger"><?= implode('<br>', $errors) ?></div>
-    <?php endif; ?>
+    form {
+        margin-bottom: 30px;
+    }
 
-    <?php if ($success): ?>
-      <div class="alert alert-success"><?= $success ?></div>
-    <?php endif; ?>
+    label {
+        font-weight: 600;
+        color: #444;
+    }
 
-    <!-- Create New Announcement -->
-    <h4>Create New Announcement</h4>
-    <form method="post" class="mb-4">
-      <div class="mb-3">
-        <label class="form-label">Title</label>
-        <input type="text" name="title" class="form-control" required>
-      </div>
+    input[type="text"], textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 15px;
+    }
 
-      <div class="mb-3">
-        <label class="form-label">Content</label>
-        <textarea name="content" class="form-control" rows="4" required></textarea>
-      </div>
+    .btn-primary {
+        background: #0d6efd;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: 0.2s ease-in-out;
+    }
 
-      <button type="submit" class="btn btn-primary">Publish</button>
-    </form>
+    .btn-primary:hover {
+        background: #0b5ed7;
+    }
 
-    <hr>
+    hr {
+        margin: 30px 0;
+        border: none;
+        border-top: 1px solid #ddd;
+    }
 
-    <!-- Previous Announcements -->
-    <h4 class="mt-4">Previous Announcements</h4>
-    <?php if ($announcements): ?>
-      <ul class="list-group mt-3">
-        <?php foreach ($announcements as $a): ?>
-          <li class="list-group-item d-flex justify-content-between align-items-start flex-column flex-md-row">
-            <div>
-              <strong><?= htmlspecialchars($a['title']) ?></strong>
-              <div class="small text-muted mt-1"><?= nl2br(htmlspecialchars($a['content'])) ?></div>
+    /* Announcement List */
+    .announcement-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    .announcement-table th,
+    .announcement-table td {
+        border: 1px solid #ddd;
+        padding: 12px 14px;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    .announcement-table th {
+        background: linear-gradient(180deg, #0b1220, #17202a); /* Same as sidebar */
+        color: #e6eef8;
+        font-weight: 600;
+    }
+
+    .announcement-table tr:hover {
+        background-color: #f1f5ff;
+    }
+
+    .announcement-title {
+        font-weight: 600;
+        font-size: 16px;
+        color: #333;
+    }
+
+    .announcement-content {
+        color: #555;
+        font-size: 14px;
+        margin-top: 4px;
+        white-space: pre-wrap;
+    }
+
+    .announcement-date {
+        font-size: 13px;
+        color: #777;
+        text-align: right;
+    }
+
+    .alert {
+        padding: 10px 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        font-weight: 500;
+    }
+
+    .alert-success {
+        background: #d1e7dd;
+        color: #0f5132;
+        border: 1px solid #badbcc;
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        color: #842029;
+        border: 1px solid #f5c2c7;
+    }
+
+    .no-data {
+        text-align: center;
+        font-style: italic;
+        color: #777;
+        padding: 20px;
+    }
+</style>
+
+<main class="cc-main">
+    <div class="announcement-container">
+        <h1 class="admin-dashboard-title">ANNOUNCEMENTS</h1>
+
+        <?php if ($errors): ?>
+            <div class="alert alert-danger"><?= implode('<br>', $errors) ?></div>
+        <?php endif; ?>
+
+        <?php if ($success): ?>
+            <div class="alert alert-success"><?= $success ?></div>
+        <?php endif; ?>
+
+        <!-- Create New Announcement -->
+        <h4>Create New Announcement</h4>
+        <form method="post">
+            <div class="mb-3">
+                <label>Title</label>
+                <input type="text" name="title" required>
             </div>
-            <span class="text-muted mt-2 mt-md-0"><?= date('d M Y, h:i A', strtotime($a['created_at'])) ?></span>
-          </li>
-        <?php endforeach; ?>
-      </ul>
-    <?php else: ?>
-      <p class="text-muted mt-3">No announcements yet.</p>
-    <?php endif; ?>
-  </div>
-</div>
+
+            <div class="mb-3">
+                <label>Content</label>
+                <textarea name="content" rows="4" required></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary">Publish</button>
+        </form>
+
+        <hr>
+
+        <!-- Previous Announcements -->
+        <h4>Previous Announcements</h4>
+        <?php if ($announcements): ?>
+            <table class="announcement-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Content</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($announcements as $a): ?>
+                        <tr>
+                            <td class="announcement-title"><?= htmlspecialchars($a['title']) ?></td>
+                            <td class="announcement-content"><?= nl2br(htmlspecialchars($a['content'])) ?></td>
+                            <td class="announcement-date"><?= date('d M Y, h:i A', strtotime($a['created_at'])) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <p class="no-data">No announcements yet.</p>
+        <?php endif; ?>
+    </div>
+</main>
 
 <?php include '../includes/footer.php'; ?>
