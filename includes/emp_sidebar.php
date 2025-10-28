@@ -1,4 +1,3 @@
-
 <!-- Responsive Sidebar include for employee pages -->
 <div class="cc-app">
     <!-- Hamburger / Sidebar toggle -->
@@ -15,13 +14,12 @@
         <nav class="cc-nav">
             <ul>
                 <li><a href="dashboard.php">Dashboard</a></li>
-                <li><a href="attendance.php">Attendance</a></li>
-                <li><a href="../leave.php">Leaves</a></li>
-                <li><a href="../accouncement.php">Announcements</a></li>
-                <li><a href="../document.php">Documents</a></li>
+                <li><a href="attendance.php">My Attendance</a></li>
+                <li><a href="leave.php">My Leaves</a></li>
+                <li><a href="announcements.php">Announcements</a></li>
+                <li><a href="documents.php">Documents</a></li>
+                <li><a href="profile.php">My Profile</a></li>
             </ul>
         </nav>
     </aside>
-
-    <main class="cc-main">
-        <!-- Page content starts here -->
+</div>
