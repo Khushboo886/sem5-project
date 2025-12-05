@@ -24,7 +24,7 @@ $details = $stmt->fetch(PDO::FETCH_ASSOC);
 
     <!-- Main content -->
     <main class="cc-main" style="flex:1; padding:30px;">
-        <h2 style="margin-bottom:20px;">Employee Dashboard &gt; My Profile</h2>
+        <h2 style="margin-bottom:20px;">MY PROFILE</h2>
 
         <div style="max-width:900px;">
 
