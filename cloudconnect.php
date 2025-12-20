@@ -1,15 +1,7 @@
 <?php
-// cloudconnect_landing.php
-// Single-file PHP + HTML landing page for "CloudConnect".
-// This file is static (no DB). Save as cloudconnect_landing.php and run with: php -S localhost:8000
+include './includes/header.php'; 
 ?>
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CloudConnect — Employee Management</title>
-  <meta name="description" content="CloudConnect — modern employee management & HR dashboard" />
+  
   <style>
     :root{
       --bg-grad: linear-gradient(135deg,#08122f 0%, #0b2a5f 30%, #3b1c6b 70%, #2b0f46 100%);
@@ -48,7 +40,7 @@
     }
 
     /* Page container */
-    .wrap{max-width:1200px;margin:40px auto;padding:36px}
+    .wrap{max-width:1200px;margin:auto;padding:24px; height:100vh; display:flex;flex-direction:column;}
 
     /* Top navigation */
     .nav{display:flex;align-items:center;justify-content:space-between}
@@ -63,18 +55,18 @@
     .btn-solid{background:var(--btn-grad);color:white;box-shadow:0 8px 30px var(--btn-shadow);border:1px solid rgba(255,255,255,0.06)}
 
     /* Hero */
-    .hero{display:grid;grid-template-columns:1fr 520px;gap:40px;align-items:center;margin-top:40px}
+    .hero{flex:1;display:grid;grid-template-columns:1fr 520px;gap:32px;align-items:center;margin-top:20px}
     .hero-left{max-width:640px}
     .eyebrow{display:inline-block;padding:6px 10px;background:rgba(255,255,255,0.04);border-radius:999px;font-size:13px;margin-bottom:18px;color:var(--text)}
-    .headline{font-size:64px;line-height:1.03;font-weight:700;color:var(--text);margin-bottom:18px}
+    .headline{font-size:52px;line-height:1.03;font-weight:700;color:var(--text);margin-bottom:18px}
     .sub{font-size:18px;color:var(--muted);margin-bottom:28px}
-    .primary-cta{display:inline-block;padding:18px 34px;border-radius:14px;background:var(--btn-grad);font-size:20px;font-weight:700;box-shadow:0 8px 30px var(--btn-shadow);transform:translateY(0);transition:all .25s ease;border:1px solid rgba(255,255,255,0.18);position:relative;overflow:hidden;color:#fff}
+    .primary-cta{display:inline-block;padding:14px 28px;border-radius:14px;background:var(--btn-grad);font-size:20px;font-weight:700;box-shadow:0 8px 30px var(--btn-shadow);transform:translateY(0);transition:all .25s ease;border:1px solid rgba(255,255,255,0.18);position:relative;overflow:hidden;color:#fff}
     .primary-cta::before{content:"";position:absolute;top:0;left:-120%;width:120%;height:100%;background:linear-gradient(120deg,rgba(255,255,255,0.15),rgba(255,255,255,0));transform:skewX(-20deg);transition:0.6s;}
     .primary-cta:hover::before{left:120%;}
     .primary-cta:hover{transform:translateY(-5px) scale(1.03);box-shadow:0 15px 40px rgba(47,91,255,0.55);} 
 
     /* Right mockup card (glass) */
-    .mockup{width:520px;margin-left:auto;border-radius:18px;padding:22px;background:var(--card-bg);box-shadow:0 30px 70px rgba(2,6,23,0.6);backdrop-filter:blur(8px);transform:translateY(20px) rotate(-6deg);transition:all .4s ease}
+    .mockup{width:520px;margin-left:auto;border-radius:18px;padding:18px;background:var(--card-bg);box-shadow:0 30px 70px rgba(2,6,23,0.6);backdrop-filter:blur(8px);transform:translateY(20px) rotate(-6deg);transition:all .4s ease}
     .mockup .row{display:flex;gap:12px;margin-bottom:18px}
     .card{flex:1;padding:16px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--glass-border);}
     .card .num{font-size:22px;font-weight:700;color:var(--text)}
@@ -84,7 +76,7 @@
     .dir header{display:flex;justify-content:space-between;padding:14px 16px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));font-weight:700;color:var(--text)}
     .dir table{width:100%;border-collapse:collapse}
     .dir tr{border-top:1px solid rgba(255,255,255,0.02)}
-    .dir td{padding:12px 16px;font-size:14px;color:var(--text)}
+    .dir td{padding:10px 14px;font-size:14px;color:var(--text)}
     .avatar{width:36px;height:36px;border-radius:999px;display:inline-block;vertical-align:middle;margin-right:10px;object-fit:cover;border:2px solid rgba(255,255,255,0.03)}
     .status{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px}
     .status.active{background:linear-gradient(90deg,#1db954,#39d353);color:#081018}
@@ -112,33 +104,11 @@
     footer{margin-top:60px;color:var(--muted);font-size:13px;text-align:center}
 
   </style>
-</head>
-<body>
+
   <div class="bg-shape"></div>
   <div class="bg-shape-2"></div>
-
+<div class="cc-app">
   <main class="wrap">
-    <nav class="nav fade-in delay-1">
-      <div class="brand">
-        <div class="logo" aria-hidden="true">
-          <!-- Cloud SVG logo -->
-          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
-                <stop offset="0" stop-color="#77A9FF"/>
-                <stop offset="1" stop-color="#7C5BFF"/>
-              </linearGradient>
-            </defs>
-            <path d="M45 36c6 0 11-5 11-11s-5-11-11-11c-1.3 0-2.6.2-3.8.6A12 12 0 0 0 20 30.4 8 8 0 0 0 28 54h17z" fill="url(#g1)"/>
-          </svg>
-        </div>
-        <h1>CloudConnect</h1>
-      </div>
-
-      <div class="cta">
-        <button id="themeToggle" class="btn btn-ghost">🌙 Dark Mode</button>
-      </div>
-    </nav>
 
     <section class="hero">
       <div class="hero-left">
@@ -205,13 +175,13 @@
           </table>
         </div>
       </div>
-
     </section>
-
     <footer>
       © <?php echo date('Y'); ?> CloudConnect — Built with care
     </footer>
   </main>
+</div>
+  
 
   <script>
     // Lightweight interaction: subtle parallax for the mockup on mouse move
@@ -269,5 +239,3 @@
       el.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' ') e.click(); });
     });
   </script>
-</body>
-</html>

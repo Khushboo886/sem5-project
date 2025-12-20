@@ -1,219 +1,310 @@
 <?php
 require_once '../includes/session.php';
-requireAdmin(); // only admin access
+requireAdmin();
 require_once '../includes/db.php';
 include '../includes/header.php';
-include '../includes/admin_sidebar.php';
+
+function e($v){ return htmlspecialchars($v ?? '', ENT_QUOTES); }
 
 $errors = [];
 $success = '';
 
-// Handle new announcement form submission
+/* ===============================
+   CREATE ANNOUNCEMENT
+================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $title = trim($_POST['title'] ?? '');
-    $content = trim($_POST['content'] ?? '');
+
+    $title      = trim($_POST['title'] ?? '');
+    $content    = trim($_POST['content'] ?? '');
+    $priority   = $_POST['priority'] ?? 'medium';
+    $start_date = $_POST['start_date'] ?: null;
+    $end_date   = $_POST['end_date'] ?: null;
 
     if (!$title || !$content) {
-        $errors[] = "Both title and content are required.";
+        $errors[] = "Title and content are required.";
     } else {
-        try {
-            $stmt = $pdo->prepare("INSERT INTO announcements (company_id, title, content, created_at) VALUES (?, ?, ?, NOW())");
-            $stmt->execute([$_SESSION['company_id'], $title, $content]);
-            $success = "Announcement published successfully!";
-        } catch (Exception $e) {
-            $errors[] = "Error: " . $e->getMessage();
-        }
+        $stmt = $pdo->prepare("
+            INSERT INTO announcements
+            (title, content, company_id, created_by, priority, start_date, end_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $title,
+            $content,
+            $_SESSION['company_id'],
+            $_SESSION['user_id'],
+            $priority,
+            $start_date,
+            $end_date
+        ]);
+        $success = "Announcement published successfully.";
     }
 }
 
-// Fetch all announcements
-$stmt = $pdo->prepare("SELECT id, title, content, created_at FROM announcements WHERE company_id = ? ORDER BY created_at DESC");
+/* ===============================
+   FETCH ANNOUNCEMENTS
+================================ */
+$stmt = $pdo->prepare("
+    SELECT a.*, u.name AS creator
+    FROM announcements a
+    JOIN users u ON a.created_by = u.id
+    WHERE a.company_id = ?
+    ORDER BY a.created_at DESC
+");
 $stmt->execute([$_SESSION['company_id']]);
 $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<!-- ✅ Inline CSS -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Announcements — CloudConnect</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link rel="stylesheet" href="/cloudconnect/assets/css/theme.css">
+
 <style>
-    .announcement-container {
-        background: #ffffff;
-        padding: 30px;
-        margin: 20px auto;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        max-width: 95%;
-    }
+/* ===== LAYOUT ===== */
+:root{
+  --header-height:64px;
+  --sidebar-width:260px;
+}
 
-    .admin-dashboard-title {
-        font-size: 26px;
-        font-weight: 600;
-        color: #333;
-        text-align: center;
-        margin-bottom: 25px;
-    }
+.cc-main{
+  margin-left:var(--sidebar-width);
+  padding:32px;
+  padding-top: calc(var(--header-height) + 24px);
+  min-height: calc(100vh - var(--header-height));
 
-    form {
-        margin-bottom: 30px;
-    }
+.container{
+  max-width:1100px;
+  margin:0 auto;
+}
 
-    label {
-        font-weight: 600;
-        color: #444;
-    }
+/* ===== HEADER ===== */
+.page-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:24px;
+}
 
-    input[type="text"], textarea {
-        width: 100%;
-        padding: 8px 10px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        font-size: 15px;
-    }
+.page-header h1{
+  font-size:26px;
+  font-weight:700;
+}
 
-    .btn-primary {
-        background: #0d6efd;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 16px;
-        cursor: pointer;
-        transition: 0.2s ease-in-out;
-    }
+.page-header p{
+  color:var(--muted);
+  margin-top:4px;
+}
 
-    .btn-primary:hover {
-        background: #0b5ed7;
-    }
+/* ===== CARD ===== */
+.cc-card{
+  background:var(--card-bg);
+  border:1px solid var(--glass-border);
+  border-radius:18px;
+  padding:28px;
+  margin-bottom:28px;
+}
 
-    hr {
-        margin: 30px 0;
-        border: none;
-        border-top: 1px solid #ddd;
-    }
+/* ===== FORM ===== */
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
 
-    /* Announcement List */
-    .announcement-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-    }
+.form-grid textarea{
+  grid-column:1 / -1;
+  min-height:120px;
+}
 
-    .announcement-table th,
-    .announcement-table td {
-        border: 1px solid #ddd;
-        padding: 12px 14px;
-        text-align: left;
-        vertical-align: top;
-    }
+label{
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:6px;
+  display:block;
+}
 
-    .announcement-table th {
-        background: linear-gradient(180deg, #0b1220, #17202a); /* Same as sidebar */
-        color: #e6eef8;
-        font-weight: 600;
-    }
+input, textarea, select{
+  width:100%;
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid var(--glass-border);
+  background:transparent;
+  color:var(--text);
+  font-size:14px;
+}
 
-    .announcement-table tr:hover {
-        background-color: #f1f5ff;
-    }
+textarea{ resize:none }
 
-    .announcement-title {
-        font-weight: 600;
-        font-size: 16px;
-        color: #333;
-    }
+/* ===== BUTTON ===== */
+.btn-primary{
+  grid-column:1 / -1;
+  height:48px;
+  border-radius:14px;
+  border:none;
+  background:linear-gradient(135deg,#5a8eff,#3b5bff);
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+}
 
-    .announcement-content {
-        color: #555;
-        font-size: 14px;
-        margin-top: 4px;
-        white-space: pre-wrap;
-    }
+/* ===== ALERTS ===== */
+.alert{
+  padding:14px;
+  border-radius:12px;
+  margin-bottom:20px;
+  font-size:14px;
+}
+.alert-success{
+  background:rgba(46,204,113,.15);
+  color:#2ecc71;
+}
+.alert-danger{
+  background:rgba(231,76,60,.15);
+  color:#e74c3c;
+}
 
-    .announcement-date {
-        font-size: 13px;
-        color: #777;
-        text-align: right;
-    }
+/* ===== ANNOUNCEMENTS ===== */
+.announcement{
+  padding:20px 0;
+  border-bottom:1px solid var(--glass-border);
+}
+.announcement:last-child{ border-bottom:none }
 
-    .alert {
-        padding: 10px 15px;
-        border-radius: 5px;
-        margin-bottom: 15px;
-        font-weight: 500;
-    }
+.badge{
+  display:inline-block;
+  padding:4px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  margin-left:8px;
+}
 
-    .alert-success {
-        background: #d1e7dd;
-        color: #0f5132;
-        border: 1px solid #badbcc;
-    }
+.low{ background:#6c757d;color:#fff }
+.medium{ background:#ffc107;color:#000 }
+.high{ background:#dc3545;color:#fff }
 
-    .alert-danger {
-        background: #f8d7da;
-        color: #842029;
-        border: 1px solid #f5c2c7;
-    }
+.meta{
+  font-size:13px;
+  color:var(--muted);
+  margin-top:6px;
+}
 
-    .no-data {
-        text-align: center;
-        font-style: italic;
-        color: #777;
-        padding: 20px;
-    }
+/* ===== FOOTER ===== */
+footer{
+  margin-top:40px;
+  text-align:center;
+  font-size:13px;
+  color:var(--muted);
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media(max-width:1000px){
+  .cc-main{
+    margin-left:0;
+    padding:20px;
+    padding-top: calc(var(--header-height) + 20px);
+  }
+}
+
 </style>
+</head>
+
+<body>
+
+<?php include '../includes/admin_sidebar.php'; ?>
 
 <main class="cc-main">
-    <div class="announcement-container">
-        <h1 class="admin-dashboard-title">ANNOUNCEMENTS</h1>
+<div class="container">
 
-        <?php if ($errors): ?>
-            <div class="alert alert-danger"><?= implode('<br>', $errors) ?></div>
-        <?php endif; ?>
-
-        <?php if ($success): ?>
-            <div class="alert alert-success"><?= $success ?></div>
-        <?php endif; ?>
-
-        <!-- Create New Announcement -->
-        <h4>Create New Announcement</h4>
-        <form method="post">
-            <div class="mb-3">
-                <label>Title</label>
-                <input type="text" name="title" required>
-            </div>
-
-            <div class="mb-3">
-                <label>Content</label>
-                <textarea name="content" rows="4" required></textarea>
-            </div>
-
-            <button type="submit" class="btn-primary">Publish</button>
-        </form>
-
-        <hr>
-
-        <!-- Previous Announcements -->
-        <h4>Previous Announcements</h4>
-        <?php if ($announcements): ?>
-            <table class="announcement-table">
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Content</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($announcements as $a): ?>
-                        <tr>
-                            <td class="announcement-title"><?= htmlspecialchars($a['title']) ?></td>
-                            <td class="announcement-content"><?= nl2br(htmlspecialchars($a['content'])) ?></td>
-                            <td class="announcement-date"><?= date('d M Y, h:i A', strtotime($a['created_at'])) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php else: ?>
-            <p class="no-data">No announcements yet.</p>
-        <?php endif; ?>
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <h1>Announcements</h1>
+      <p>Create and manage company-wide announcements</p>
     </div>
+  </div>
+
+  <?php if ($errors): ?>
+    <div class="alert alert-danger"><?= implode('<br>', $errors) ?></div>
+  <?php endif; ?>
+
+  <?php if ($success): ?>
+    <div class="alert alert-success"><?= $success ?></div>
+  <?php endif; ?>
+
+  <!-- CREATE ANNOUNCEMENT -->
+  <div class="cc-card">
+    <h3>Create New Announcement</h3>
+
+    <form method="post" class="form-grid">
+      <div>
+        <label>Title</label>
+        <input name="title" required>
+      </div>
+
+      <div>
+        <label>Priority</label>
+        <select name="priority">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+
+      <textarea name="content" placeholder="Announcement content..." required></textarea>
+
+      <div>
+        <label>Start Date</label>
+        <input type="date" name="start_date">
+      </div>
+
+      <div>
+        <label>End Date</label>
+        <input type="date" name="end_date">
+      </div>
+
+      <button class="btn-primary">Publish Announcement</button>
+    </form>
+  </div>
+
+  <!-- PREVIOUS ANNOUNCEMENTS -->
+  <div class="cc-card">
+    <h3>Previous Announcements</h3>
+
+    <?php if ($announcements): ?>
+      <?php foreach ($announcements as $a): ?>
+        <div class="announcement">
+          <strong><?= e($a['title']) ?></strong>
+          <span class="badge <?= e($a['priority']) ?>">
+            <?= ucfirst($a['priority']) ?>
+          </span>
+
+          <p><?= nl2br(e($a['content'])) ?></p>
+
+          <div class="meta">
+            Posted by <?= e($a['creator']) ?> •
+            <?= date('d M Y, h:i A', strtotime($a['created_at'])) ?>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    <?php else: ?>
+      <p class="muted">No announcements published yet.</p>
+    <?php endif; ?>
+  </div>
+
+  <footer>
+    © <?= date('Y') ?> CloudConnect — Built with care
+  </footer>
+
+</div>
 </main>
 
-<?php include '../includes/footer.php'; ?>
+<script src="/cloudconnect/assets/js/theme.js"></script>
+</body>
+</html>

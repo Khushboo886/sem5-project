@@ -1,208 +1,263 @@
 <?php
 require_once '../includes/session.php';
-requireAdmin(); // Only admin can access this page
+requireAdmin();
 require_once '../includes/db.php';
 include '../includes/header.php';
-include '../includes/admin_sidebar.php';
 
-// Fetch attendance records with employee names
-try {
-    $stmt = $pdo->prepare("
-        SELECT u.name AS employee_name, 
-               a.date, 
-               a.check_in, 
-               a.check_out, 
-               a.status, 
-               a.remarks
-        FROM attendance a
-        INNER JOIN users u ON a.user_id = u.id
-        ORDER BY a.date DESC
-    ");
-    $stmt->execute();
-    $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    die('Query failed: ' . $e->getMessage());
+function e($v){ return htmlspecialchars($v ?? '', ENT_QUOTES); }
+
+// Filters
+$dateFilter = $_GET['date'] ?? '';
+$userFilter = $_GET['user_id'] ?? '';
+
+$params = [];
+$where = "u.company_id = ? ";
+$params[] = $_SESSION['company_id'];
+
+if ($dateFilter) {
+  $where .= "AND a.date = ? ";
+  $params[] = $dateFilter;
 }
+
+if ($userFilter) {
+  $where .= "AND u.id = ? ";
+  $params[] = $userFilter;
+}
+
+// Fetch attendance
+$stmt = $pdo->prepare("
+  SELECT 
+    u.name AS employee_name,
+    a.date,
+    a.check_in,
+    a.check_out,
+    a.status,
+    a.remarks
+  FROM attendance a
+  INNER JOIN users u ON u.id = a.user_id
+  WHERE $where
+  ORDER BY a.date DESC, a.check_in DESC
+");
+$stmt->execute($params);
+$records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Employees for filter dropdown
+$empStmt = $pdo->prepare("
+  SELECT id, name 
+  FROM users 
+  WHERE company_id = ? AND role = 'Employee'
+  ORDER BY name
+");
+$empStmt->execute([$_SESSION['company_id']]);
+$employees = $empStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<!-- ✅ Updated Inline CSS -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Attendance — CloudConnect</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link rel="stylesheet" href="/cloudconnect/assets/css/theme.css">
+
 <style>
-    .attendance-container {
-        background: #ffffff;
-        padding: 30px;
-        margin: 20px auto;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        max-width: 95%;
-    }
+:root{
+  --header-height:64px;
+  --sidebar-width:260px;
+}
 
-    .admin-dashboard-title {
-        font-size: 26px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 25px;
-        text-align: center;
-    }
+/* ===== MAIN LAYOUT ===== */
+.cc-main{
+  margin-left:var(--sidebar-width);
+  margin-top:var(--header-height);
+  padding:28px 32px 60px;
+  min-height:calc(100vh - var(--header-height));
+  background:var(--bg-grad);
+}
 
-    .filter-section {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        flex-wrap: wrap;
-        margin-bottom: 20px;
-    }
+.container{
+  max-width:1200px;
+  margin:0 auto;
+}
 
-    .filter-section label {
-        font-weight: 600;
-        color: #444;
-    }
+/* ===== PAGE HEADER ===== */
+.page-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:22px;
+}
 
-    .filter-section input[type="date"],
-    .filter-section select {
-        padding: 6px 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-    }
+.page-title h1{
+  font-size:26px;
+  font-weight:700;
+  margin-bottom:6px;
+}
 
-    .btn-primary {
-        background: #0d6efd;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 14px;
-        cursor: pointer;
-        transition: 0.2s ease-in-out;
-    }
+.page-title p{
+  color:var(--muted);
+  font-size:15px;
+}
 
-    .btn-primary:hover {
-        background: #0b5ed7;
-    }
+/* ===== FILTERS ===== */
+.filters{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+}
 
-    /* ---------- Table Styling ---------- */
-    .table-container {
-        overflow-x: auto;
-    }
+.filters input,
+.filters select{
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid var(--glass-border);
+  background:var(--card-bg);
+  color:var(--text);
+}
 
-    .attendance-table {
-        width: 100%;
-        border-collapse: collapse;
-        border: 1px solid #b8b8b8; /* visible border */
-    }
+/* ===== TABLE ===== */
+.panel{
+  background:var(--card-bg);
+  border:1px solid var(--glass-border);
+  border-radius:16px;
+  padding:6px;
+}
 
-    .attendance-table th,
-    .attendance-table td {
-        padding: 10px 12px;
-        text-align: center;
-        border: 1px solid #c2c2c2; /* visible grid lines */
-    }
+table{
+  width:100%;
+  border-collapse:collapse;
+}
 
-    .attendance-table th {
-        background: linear-gradient(180deg, #0b1220, #17202a); /* match sidebar */
-        color: #e6eef8;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
+thead th{
+  font-size:13px;
+  color:var(--muted);
+  text-align:left;
+  padding:14px 12px;
+  border-bottom:1px solid var(--glass-border);
+}
 
-    .attendance-table tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
+tbody td{
+  padding:16px 12px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  font-size:14.5px;
+}
 
-    .attendance-table tr:hover {
-        background-color: #eef3ff;
-    }
+/* ===== STATUS BADGES ===== */
+.status{
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:600;
+  display:inline-block;
+}
 
-    /* ---------- Status Badges ---------- */
-    .status-badge {
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-weight: 500;
-        color: white;
-    }
+.present{ background:linear-gradient(90deg,#1db954,#39d353); color:#081018; }
+.late{ background:#f1c40f; color:#2c2c2c; }
+.absent{ background:#e74c3c; color:#fff; }
+.half-day{ background:#3498db; color:#fff; }
 
-    .status-present { background: #28a745; }
-    .status-late { background: #ffc107; color: #333; }
-    .status-absent { background: #dc3545; }
-    .status-halfday { background: #17a2b8; }
-    .status-other { background: #6c757d; }
+/* ===== EMPTY ===== */
+.empty{
+  text-align:center;
+  padding:60px;
+  color:var(--muted);
+}
 
-    .no-data {
-        text-align: center;
-        font-style: italic;
-        color: #777;
-        padding: 20px;
-    }
+/* ===== FOOTER ===== */
+footer{
+  margin-top:40px;
+  text-align:center;
+  font-size:13px;
+  color:var(--muted);
+}
 
-    @media (max-width: 768px) {
-        .attendance-table th, .attendance-table td {
-            font-size: 14px;
-            padding: 8px;
-        }
-    }
+/* ===== RESPONSIVE ===== */
+@media(max-width:1000px){
+  .cc-main{ margin-left:0; padding:20px; }
+}
 </style>
+</head>
+
+<body>
+
+<?php include '../includes/admin_sidebar.php'; ?>
 
 <main class="cc-main">
-    <div class="attendance-container">
-        <h1 class="admin-dashboard-title">Attendance Records</h1>
+  <div class="container">
 
-        <div class="filter-section">
-            <label for="date">Filter by Date:</label>
-            <input type="date" id="date" name="date">
-
-            <label for="employee">Filter by Employee:</label>
-            <select id="employee">
-                <option value="">All Employees</option>
-                <?php
-                $empStmt = $pdo->query("SELECT id, name FROM users ORDER BY name ASC");
-                while ($emp = $empStmt->fetch(PDO::FETCH_ASSOC)) {
-                    echo "<option value=\"{$emp['id']}\">" . htmlspecialchars($emp['name']) . "</option>";
-                }
-                ?>
-            </select>
-
-            <button class="btn-primary">Apply Filters</button>
-        </div>
-
-        <div class="table-container">
-            <table class="attendance-table">
-                <thead>
-                    <tr>
-                        <th>Employee</th>
-                        <th>Date</th>
-                        <th>Clock In</th>
-                        <th>Clock Out</th>
-                        <th>Status</th>
-                        <th>Remarks</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if ($records && count($records) > 0): ?>
-                        <?php foreach ($records as $row): ?>
-                            <?php
-                                $statusClass = match(strtolower($row['status'])) {
-                                    'present' => 'status-present',
-                                    'late' => 'status-late',
-                                    'absent' => 'status-absent',
-                                    'half-day' => 'status-halfday',
-                                    default => 'status-other'
-                                };
-                            ?>
-                            <tr>
-                                <td><?= htmlspecialchars($row['employee_name']) ?></td>
-                                <td><?= htmlspecialchars($row['date']) ?></td>
-                                <td><?= htmlspecialchars($row['check_in']) ?></td>
-                                <td><?= htmlspecialchars($row['check_out']) ?></td>
-                                <td><span class="status-badge <?= $statusClass ?>"><?= ucfirst($row['status']) ?></span></td>
-                                <td><?= htmlspecialchars($row['remarks']) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr><td colspan="6" class="no-data">No attendance records found.</td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
+    <!-- HEADER -->
+    <div class="page-header">
+      <div class="page-title">
+        <h1>Attendance</h1>
+        <p>View and manage employee attendance</p>
+      </div>
     </div>
+
+    <!-- FILTERS -->
+    <form class="filters" method="get">
+      <input type="date" name="date" value="<?= e($dateFilter) ?>">
+
+      <select name="user_id">
+        <option value="">All Employees</option>
+        <?php foreach($employees as $emp): ?>
+          <option value="<?= $emp['id'] ?>" <?= $userFilter==$emp['id']?'selected':'' ?>>
+            <?= e($emp['name']) ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+
+      <button class="btn btn-solid">Apply</button>
+      <a href="attendance.php" class="btn btn-ghost">Reset</a>
+    </form>
+
+    <!-- TABLE -->
+    <div class="panel">
+      <?php if($records): ?>
+        <table>
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Date</th>
+              <th>Check In</th>
+              <th>Check Out</th>
+              <th>Status</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach($records as $r): ?>
+              <tr>
+                <td><?= e($r['employee_name']) ?></td>
+                <td><?= e($r['date']) ?></td>
+                <td><?= e($r['check_in']) ?></td>
+                <td><?= e($r['check_out'] ?? '—') ?></td>
+                <td>
+                  <span class="status <?= e($r['status']) ?>">
+                    <?= ucfirst($r['status']) ?>
+                  </span>
+                </td>
+                <td><?= e($r['remarks'] ?? '—') ?></td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      <?php else: ?>
+        <div class="empty">
+          <div style="font-size:36px;margin-bottom:10px">🕒</div>
+          No attendance records found
+        </div>
+      <?php endif; ?>
+    </div>
+
+    <footer>
+      © <?= date('Y') ?> CloudConnect — Built with care
+    </footer>
+
+  </div>
 </main>
 
-<?php include '../includes/footer.php'; ?>
+<script src="/cloudconnect/assets/js/theme.js"></script>
+</body>
+</html>

@@ -1,229 +1,258 @@
 <?php
 require_once '../includes/session.php';
-requireAdmin(); // only admin access
 require_once '../includes/db.php';
+requireAdmin();
 include '../includes/header.php';
-include '../includes/admin_sidebar.php';
 
-// Fetch leave data
+function e($v){ return htmlspecialchars($v ?? '', ENT_QUOTES); }
+
+// Filters
 $statusFilter = $_GET['status'] ?? '';
 
-$query = "SELECT l.id, u.name AS employee_name, l.start_date, l.end_date, l.reason, l.status 
-          FROM leaves l
-          JOIN users u ON l.user_id = u.id";
+$params = [];
+$where = "u.company_id = ? ";
+$params[] = $_SESSION['company_id'];
 
 if ($statusFilter) {
-    $query .= " WHERE l.status = ?";
-    $stmt = $pdo->prepare($query);
-    $stmt->execute([$statusFilter]);
-} else {
-    $stmt = $pdo->query($query);
+  $where .= "AND l.status = ? ";
+  $params[] = $statusFilter;
 }
 
+// Fetch leaves
+$stmt = $pdo->prepare("
+  SELECT 
+    l.id,
+    u.name AS employee_name,
+    l.leave_type,
+    l.start_date,
+    l.end_date,
+    l.reason,
+    l.status,
+    l.created_at
+  FROM leaves l
+  INNER JOIN users u ON u.id = l.user_id
+  WHERE $where
+  ORDER BY l.created_at DESC
+");
+$stmt->execute($params);
 $leaves = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Leaves — CloudConnect</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
-<!-- ✅ Inline CSS: perfectly matching attendance.php style -->
+<link rel="stylesheet" href="/cloudconnect/assets/css/theme.css">
+
 <style>
-    .main-content {
-        background: #ffffff;
-        padding: 30px;
-        margin: 20px auto;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        max-width: 95%;
-    }
+:root{
+  --header-height:64px;
+  --sidebar-width:260px;
+}
 
-    .admin-dashboard-title {
-        font-size: 26px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 25px;
-        text-align: center;
-    }
+/* ===== MAIN LAYOUT ===== */
+.cc-main{
+  margin-left:var(--sidebar-width);
+  margin-top:var(--header-height);
+  padding:28px 32px 60px;
+  min-height:calc(100vh - var(--header-height));
+}
 
-    .filter-section {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        flex-wrap: wrap;
-        margin-bottom: 20px;
-    }
+.container{
+  max-width:1100px;
+  margin:0 auto;
+}
 
-    .filter-section label {
-        font-weight: 600;
-        color: #444;
-    }
+/* ===== PAGE HEADER ===== */
+.page-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:22px;
+}
 
-    .filter-section select {
-        padding: 6px 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-    }
+.page-title h1{
+  font-size:26px;
+  font-weight:700;
+  margin-bottom:6px;
+}
 
-    .btn-primary {
-        background: #0d6efd;
-        color: #fff;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 14px;
-        cursor: pointer;
-        transition: 0.2s ease-in-out;
-    }
+.page-title p{
+  color:var(--muted);
+  font-size:15px;
+}
 
-    .btn-primary:hover { background: #0b5ed7; }
+/* ===== FILTERS ===== */
+.filters{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+}
 
-    .btn-success {
-        background: #28a745;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        padding: 6px 12px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: 0.2s;
-    }
-    .btn-success:hover { background: #218838; }
+.filters select{
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid var(--glass-border);
+  background:var(--card-bg);
+  color:var(--text);
+}
 
-    .btn-danger {
-        background: #dc3545;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        padding: 6px 12px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: 0.2s;
-    }
-    .btn-danger:hover { background: #c82333; }
+/* ===== TABLE ===== */
+.panel{
+  background:var(--card-bg);
+  border:1px solid var(--glass-border);
+  border-radius:16px;
+  overflow:hidden;
+}
 
-    .btn-secondary {
-        background: #6c757d;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        padding: 6px 12px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: 0.2s;
-    }
-    .btn-secondary:hover { background: #5a6268; }
+table{
+  width:100%;
+  border-collapse:collapse;
+}
 
-    /* ✅ Table Styling - identical to attendance.php */
-    .table-container {
-        overflow-x: auto;
-    }
+thead th{
+  font-size:13px;
+  color:var(--muted);
+  text-align:left;
+  padding:14px 12px;
+  border-bottom:1px solid var(--glass-border);
+}
 
-    .leave-table {
-        width: 100%;
-        border-collapse: collapse;
-        border: 1px solid #b8b8b8;
-    }
+tbody td{
+  padding:16px 12px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  font-size:14.5px;
+}
 
-    .leave-table th,
-    .leave-table td {
-        padding: 10px 12px;
-        text-align: center;
-        border: 1px solid #c2c2c2;
-    }
+.status{
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:600;
+  display:inline-block;
+}
 
-    .leave-table th {
-        background: linear-gradient(180deg, #0b1220, #17202a);
-        color: #e6eef8;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
+.pending{ background:#f1c40f; color:#2c2c2c; }
+.approved{ background:linear-gradient(90deg,#1db954,#39d353); color:#081018; }
+.rejected{ background:#e74c3c; color:#fff; }
 
-    .leave-table tr:nth-child(even) { background-color: #f9f9f9; }
-    .leave-table tr:hover { background-color: #eef3ff; }
+.actions{
+  white-space:nowrap;
+}
 
-    .status-badge {
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-weight: 500;
-        color: white;
-    }
+.actions a{
+  margin-left:6px;
+}
 
-    .status-pending { background: #ffc107; color: #333; }
-    .status-approved { background: #28a745; }
-    .status-rejected { background: #dc3545; }
+/* ===== EMPTY STATE ===== */
+.empty{
+  text-align:center;
+  padding:60px;
+  color:var(--muted);
+}
 
-    .no-data {
-        text-align: center;
-        font-style: italic;
-        color: #777;
-        padding: 20px;
-    }
+/* ===== FOOTER ===== */
+footer{
+  margin-top:40px;
+  text-align:center;
+  font-size:13px;
+  color:var(--muted);
+}
 
-    @media (max-width: 768px) {
-        .filter-section { flex-direction: column; align-items: flex-start; }
-        .leave-table th, .leave-table td { font-size: 14px; padding: 8px; }
-    }
+/* ===== RESPONSIVE ===== */
+@media(max-width:1000px){
+  .cc-main{
+    margin-left:0;
+    padding:20px;
+  }
+}
 </style>
+</head>
 
-<!-- ✅ Updated HTML -->
+<body>
+
+<?php include '../includes/admin_sidebar.php'; ?>
+
 <main class="cc-main">
-    <div class="main-content">
-        <h1 class="admin-dashboard-title">Leave Records</h1>
+  <div class="container">
 
-        <div class="filter-section">
-            <form method="get">
-                <label for="status">Filter by Status:</label>
-                <select name="status" id="status">
-                    <option value="">All</option>
-                    <option value="Pending" <?= $statusFilter == 'Pending' ? 'selected' : '' ?>>Pending</option>
-                    <option value="Approved" <?= $statusFilter == 'Approved' ? 'selected' : '' ?>>Approved</option>
-                    <option value="Rejected" <?= $statusFilter == 'Rejected' ? 'selected' : '' ?>>Rejected</option>
-                </select>
-                <button type="submit" class="btn-primary">Apply Filters</button>
-            </form>
-        </div>
-
-        <div class="table-container">
-            <table class="leave-table">
-                <thead>
-                    <tr>
-                        <th>Employee</th>
-                        <th>Date Range</th>
-                        <th>Reason</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if ($leaves && count($leaves) > 0): ?>
-                        <?php foreach ($leaves as $leave): ?>
-                            <?php
-                                $statusClass = match($leave['status']) {
-                                    'Pending' => 'status-pending',
-                                    'Approved' => 'status-approved',
-                                    'Rejected' => 'status-rejected',
-                                    default => ''
-                                };
-                            ?>
-                            <tr>
-                                <td><?= htmlspecialchars($leave['employee_name']) ?></td>
-                                <td><?= htmlspecialchars($leave['start_date']) ?> → <?= htmlspecialchars($leave['end_date']) ?></td>
-                                <td><?= htmlspecialchars($leave['reason']) ?></td>
-                                <td><span class="status-badge <?= $statusClass ?>"><?= htmlspecialchars($leave['status']) ?></span></td>
-                                <td>
-                                    <?php if ($leave['status'] == 'Pending'): ?>
-                                        <a href="update_leave_status.php?id=<?= $leave['id'] ?>&status=Approved" class="btn-success">Approve</a>
-                                        <a href="update_leave_status.php?id=<?= $leave['id'] ?>&status=Rejected" class="btn-danger">Reject</a>
-                                    <?php else: ?>
-                                        <a href="view_leave.php?id=<?= $leave['id'] ?>" class="btn-secondary">View</a>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr><td colspan="5" class="no-data">No leave requests found.</td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
+    <!-- HEADER -->
+    <div class="page-header">
+      <div class="page-title">
+        <h1>Leaves</h1>
+        <p>Review and manage employee leave requests</p>
+      </div>
     </div>
+
+    <!-- FILTER -->
+    <form class="filters" method="get">
+      <select name="status">
+        <option value="">All Status</option>
+        <option value="pending" <?= $statusFilter==='pending'?'selected':'' ?>>Pending</option>
+        <option value="approved" <?= $statusFilter==='approved'?'selected':'' ?>>Approved</option>
+        <option value="rejected" <?= $statusFilter==='rejected'?'selected':'' ?>>Rejected</option>
+      </select>
+
+      <button class="btn">Apply</button>
+      <a href="leaves.php" class="btn btn-ghost">Reset</a>
+    </form>
+
+    <!-- TABLE -->
+    <div class="panel">
+      <?php if($leaves): ?>
+        <table>
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Leave Type</th>
+              <th>Date Range</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th style="text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach($leaves as $l): ?>
+              <tr>
+                <td><?= e($l['employee_name']) ?></td>
+                <td><?= ucfirst(e($l['leave_type'])) ?></td>
+                <td><?= e($l['start_date']) ?> → <?= e($l['end_date']) ?></td>
+                <td><?= e($l['reason'] ?? '—') ?></td>
+                <td>
+                  <span class="status <?= e($l['status']) ?>">
+                    <?= ucfirst($l['status']) ?>
+                  </span>
+                </td>
+                <td class="actions" style="text-align:right">
+                  <?php if($l['status'] === 'pending'): ?>
+                    <a href="update_leave_status.php?id=<?= $l['id'] ?>&status=approved" class="btn btn-ghost">Approve</a>
+                    <a href="update_leave_status.php?id=<?= $l['id'] ?>&status=rejected" class="btn btn-ghost">Reject</a>
+                  <?php else: ?>
+                    <span style="color:var(--muted);font-size:13px">—</span>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      <?php else: ?>
+        <div class="empty">
+          <div style="font-size:36px;margin-bottom:10px">📄</div>
+          No leave requests found
+        </div>
+      <?php endif; ?>
+    </div>
+
+    <footer>
+      © <?= date('Y') ?> CloudConnect — Built with care
+    </footer>
+
+  </div>
 </main>
 
-<?php include '../includes/footer.php'; ?>
+<script src="/cloudconnect/assets/js/theme.js"></script>
+</body>
+</html>

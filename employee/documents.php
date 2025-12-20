@@ -1,17 +1,15 @@
 <?php
 require_once '../includes/session.php';
-requireEmployee(); // only employees can access
+requireEmployee();
 require_once '../includes/db.php';
 include '../includes/header.php';
 
 $user_id    = $_SESSION['user_id'];
 $company_id = $_SESSION['company_id'] ?? null;
 
-// If no company in session, show empty list
 $documents = [];
 
 if ($company_id) {
-    // Show public docs + docs uploaded by this user
     $stmt = $pdo->prepare("
         SELECT d.*, u.name AS uploader_name
         FROM documents d
@@ -25,73 +23,145 @@ if ($company_id) {
 }
 ?>
 
-<!-- Layout container -->
-<div class="cc-app" style="display:flex; min-height:100vh; background:#f9fafc;">
-    <!-- Sidebar -->
-    <?php include '../includes/emp_sidebar.php'; ?>
+<?php include '../includes/emp_sidebar.php'; ?>
 
-    <!-- Main content -->
-    <main class="cc-main" style="flex:1; padding:30px;">
+<main class="cc-main">
 
-        <h2 style="margin-bottom:20px; font-weight:600; color:#222;">DOCUMENTS</h2>
+    <!-- Page Header -->
+    <div class="cc-page-header">
+        <div>
+            <h1>Documents</h1>
+            <p class="muted">Company shared files & uploads</p>
+        </div>
+    </div>
 
-        <div style="background:white; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.08); padding:18px; margin-bottom:18px;">
-            <h3 style="margin-top:0; margin-bottom:12px;">Shared Documents List</h3>
+    <!-- Documents Card -->
+    <div class="cc-card">
 
-            <?php if (empty($documents)): ?>
-                <p style="color:#666; margin:8px 0;">No documents uploaded yet.</p>
-            <?php else: ?>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse; min-width:720px; font-size:15px;">
-                        <thead>
-                            <tr style="background:linear-gradient(180deg,#0b1220,#17202a); color:#fff;">
-                                <th style="padding:12px; text-align:left;">Document Name</th>
-                                <th style="padding:12px; text-align:left; width:35%;">Description</th>
-                                <th style="padding:12px; text-align:left;">Uploaded By</th>
-                                <th style="padding:12px; text-align:left;">Uploaded On</th>
-                                <th style="padding:12px; text-align:center; width:130px;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($documents as $doc): 
-                                // file path on disk
-                                $filePath = '../uploads/documents/' . $doc['file_path'];
-                            ?>
-                                <tr style="border-bottom:1px solid #eee;">
-                                    <td style="padding:12px;">
-                                        <strong><?= htmlspecialchars($doc['title']) ?></strong>
-                                        <div style="font-size:13px; color:#666; margin-top:6px;">
-                                            <small><?= htmlspecialchars($doc['file_type'] ?: '') ?></small>
-                                        </div>
-                                    </td>
+        <h3 style="margin-bottom:16px;">Shared Documents</h3>
 
-                                    <td style="padding:12px; color:#333;">
-                                        <?= nl2br(htmlspecialchars(strlen($doc['description'] ?? '') > 200 ? substr($doc['description'],0,200) . '...' : ($doc['description'] ?? '-'))); ?>
-                                    </td>
+        <?php if (empty($documents)): ?>
+            <p class="muted">No documents uploaded yet.</p>
+        <?php else: ?>
 
-                                    <td style="padding:12px;"><?= htmlspecialchars($doc['uploader_name'] ?? ' — ') ?></td>
+        <div class="cc-table-wrapper">
+            <table class="cc-table">
+                <thead>
+                    <tr>
+                        <th style="width:22%;">Document</th>
+                        <th style="width:30%;">Description</th>
+                        <th style="width:18%;">Uploaded By</th>
+                        <th style="width:15%;">Date</th>
+                        <th style="width:15%; text-align:center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
 
-                                    <td style="padding:12px;"><?= date('d M Y', strtotime($doc['created_at'])) ?></td>
+                <?php foreach ($documents as $doc):
+                    $filePath = '../uploads/documents/' . $doc['file_path'];
+                ?>
+                    <tr>
+                        <!-- Document -->
+                        <td>
+                            <div style="font-weight:600;">
+                                <?= htmlspecialchars($doc['title']) ?>
+                            </div>
+                            <div class="muted" style="font-size:13px;">
+                                <?= htmlspecialchars($doc['file_type'] ?? '') ?>
+                            </div>
+                        </td>
 
-                                    <td style="padding:12px; text-align:center;">
-                                        <?php if (!empty($doc['file_path']) && file_exists($filePath)): ?>
-                                            <a href="<?= htmlspecialchars($filePath) ?>" download
-                                               style="display:inline-block; text-decoration:none; background:#198754; color:#fff; padding:8px 10px; border-radius:6px;">
-                                               Download
-                                            </a>
-                                        <?php else: ?>
-                                            <span style="color:#999; font-size:14px;">Not found</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
+                        <!-- Description -->
+                        <td>
+                            <?= htmlspecialchars(
+                                strlen($doc['description'] ?? '') > 120
+                                    ? substr($doc['description'], 0, 120) . '...'
+                                    : ($doc['description'] ?? '-')
+                            ) ?>
+                        </td>
+
+                        <!-- Uploaded By -->
+                        <td><?= htmlspecialchars($doc['uploader_name'] ?? '—') ?></td>
+
+                        <!-- Date -->
+                        <td><?= date('d M Y', strtotime($doc['created_at'])) ?></td>
+
+                        <!-- Action -->
+                        <td style="text-align:center;">
+                            <?php if (!empty($doc['file_path']) && file_exists($filePath)): ?>
+                                <a href="<?= htmlspecialchars($filePath) ?>"
+                                   download
+                                   class="btn btn-success btn-sm">
+                                    Download
+                                </a>
+                            <?php else: ?>
+                                <span class="muted">Not found</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+
+                </tbody>
+            </table>
         </div>
 
-    </main>
-</div>
+        <?php endif; ?>
+
+    </div>
+</main>
 
 <?php include '../includes/footer.php'; ?>
+
+<style>
+/* ===============================
+   CloudConnect Table Styling
+================================ */
+
+.cc-main{
+  margin-left:300px;
+  padding:32px;
+  padding-top:96px;
+  min-height:calc(100vh - 140px);
+}
+
+.cc-table-wrapper{
+  overflow-x:auto;
+}
+
+.cc-table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+.cc-table th,
+.cc-table td{
+  padding:14px 16px;
+  vertical-align:top;
+  text-align:left;
+}
+
+.cc-table thead th{
+  background:linear-gradient(180deg,#0b1220,#17202a);
+  color:#fff;
+  font-size:14px;
+  font-weight:600;
+}
+
+.cc-table tbody tr{
+  border-bottom:1px solid #eee;
+}
+
+.cc-table tbody tr:hover{
+  background:#fafbff;
+}
+
+/* Footer alignment */
+.cc-footer{
+  margin-left:300px;
+}
+
+@media(max-width:1000px){
+  .cc-main{margin-left:0;padding-top:88px;}
+  .cc-footer{margin-left:0;}
+}
+</style>
