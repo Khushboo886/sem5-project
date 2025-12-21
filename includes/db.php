@@ -1,8 +1,8 @@
 <?php
 /* =========================================================
    CloudConnect Database Connection
-   - Auto detects Azure vs Localhost
-   - Safe fallback mechanism
+   - Azure (No SSL)
+   - Localhost fallback
 ========================================================= */
 
 $options = [
@@ -11,21 +11,24 @@ $options = [
 ];
 
 /* -------------------------------
-   AZURE MYSQL CONFIG
+   AZURE MYSQL CONFIG (NO SSL)
 -------------------------------- */
 $azure = [
     'host' => 'cloudconnectserver.mysql.database.azure.com',
     'db'   => 'cloudconnect',
     'user' => 'cloudadmin@cloudconnectserver',
-    'pass' => 'admin@123'
+    'pass' => 'admin@123',
+    'dsn'  => "mysql:host=cloudconnectserver.mysql.database.azure.com;
+               dbname=cloudconnect;
+               charset=utf8mb4;
+               sslmode=DISABLED"
 ];
 
 /* -------------------------------
-   LOCALHOST (XAMPP) CONFIG
+   LOCALHOST CONFIG
 -------------------------------- */
 $local = [
-    'host' => 'localhost',
-    'db'   => 'cloudconnect',
+    'dsn'  => "mysql:host=localhost;dbname=cloudconnect;charset=utf8mb4",
     'user' => 'root',
     'pass' => ''
 ];
@@ -36,25 +39,22 @@ $local = [
 try {
     // Try Azure first
     $pdo = new PDO(
-        "mysql:host={$azure['host']};dbname={$azure['db']};charset=utf8mb4",
+        $azure['dsn'],
         $azure['user'],
         $azure['pass'],
         $options
     );
-
 } catch (PDOException $e) {
 
     try {
         // Fallback to Localhost
         $pdo = new PDO(
-            "mysql:host={$local['host']};dbname={$local['db']};charset=utf8mb4",
+            $local['dsn'],
             $local['user'],
             $local['pass'],
             $options
         );
-
     } catch (PDOException $e2) {
-        // Final failure (safe message)
         die("Database connection failed. Please try again later.");
     }
 }

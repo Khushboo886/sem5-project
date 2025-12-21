@@ -3,9 +3,41 @@ require_once '../includes/session.php';
 requireEmployee();
 require_once '../includes/db.php';
 
+$user_id = $_SESSION['user_id'];
+$company_id = $_SESSION['company_id'];
 $name = $_SESSION['name'] ?? 'Employee';
 
-/* FETCH ACTIVE ANNOUNCEMENTS */
+/* ===========================
+   ATTENDANCE SUMMARY
+=========================== */
+$attStmt = $pdo->prepare("
+    SELECT 
+      COUNT(*) AS total,
+      SUM(status='present') AS present,
+      SUM(status='late') AS late,
+      SUM(status='absent') AS absent
+    FROM attendance
+    WHERE user_id = ?
+");
+$attStmt->execute([$user_id]);
+$attendance = $attStmt->fetch();
+
+/* ===========================
+   LEAVE SUMMARY
+=========================== */
+$leaveStmt = $pdo->prepare("
+    SELECT
+      SUM(status='approved') AS approved,
+      SUM(status='pending')  AS pending,
+      SUM(status='rejected') AS rejected
+    FROM leaves
+    WHERE user_id = ?
+");
+$leaveStmt->execute([$user_id]);
+$leaves = $leaveStmt->fetch();
+/* ===========================
+   ACTIVE ANNOUNCEMENTS
+=========================== */
 $annStmt = $pdo->prepare("
   SELECT title, content, priority
   FROM announcements
@@ -16,7 +48,7 @@ $annStmt = $pdo->prepare("
     FIELD(priority,'high','medium','low'),
     created_at DESC
 ");
-$annStmt->execute([$_SESSION['company_id']]);
+$annStmt->execute([$company_id]);
 $announcements = $annStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
@@ -41,32 +73,46 @@ $announcements = $annStmt->fetchAll(PDO::FETCH_ASSOC);
   <!-- DASHBOARD GRID -->
   <div class="cc-grid">
 
-    <!-- Attendance Summary -->
-    <div class="panel">
-      <h3>Attendance Summary</h3>
+   <!-- Attendance Summary -->
+<div class="panel">
+  <h3>Attendance Summary</h3>
 
-      <div class="metric">
-        <span>Total Days</span>
-        <strong>0</strong>
-      </div>
+  <div class="metric">
+    <span>Total Days</span>
+    <strong><?= (int)$attendance['total'] ?></strong>
+  </div>
 
-      <div class="chips">
-        <span class="chip green">Present: 0</span>
-        <span class="chip yellow">Late: 0</span>
-        <span class="chip red">Absent: 0</span>
-      </div>
-    </div>
+  <div class="chips">
+    <span class="chip green">
+      Present: <?= (int)$attendance['present'] ?>
+    </span>
+    <span class="chip yellow">
+      Late: <?= (int)$attendance['late'] ?>
+    </span>
+    <span class="chip red">
+      Absent: <?= (int)$attendance['absent'] ?>
+    </span>
+  </div>
+</div>
+
 
     <!-- Leave Summary -->
-    <div class="panel">
-      <h3>Leave Summary</h3>
+<div class="panel">
+  <h3>Leave Summary</h3>
 
-      <div class="chips">
-        <span class="chip green">Approved: 0</span>
-        <span class="chip yellow">Pending: 0</span>
-        <span class="chip red">Rejected: 0</span>
-      </div>
-    </div>
+  <div class="chips">
+    <span class="chip green">
+      Approved: <?= (int)$leaves['approved'] ?>
+    </span>
+    <span class="chip yellow">
+      Pending: <?= (int)$leaves['pending'] ?>
+    </span>
+    <span class="chip red">
+      Rejected: <?= (int)$leaves['rejected'] ?>
+    </span>
+  </div>
+</div>
+
 
     <!-- Profile Shortcut (NO NAME/EMAIL SHOWN) -->
     <div class="panel profile-card">
