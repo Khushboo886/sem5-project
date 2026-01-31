@@ -1,60 +1,37 @@
 <?php
-/* =========================================================
-   CloudConnect Database Connection
-   - Azure (No SSL)
-   - Localhost fallback
-========================================================= */
+/* ============================================
+   CloudConnect Database Connection (FINAL)
+============================================ */
 
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
 ];
 
-/* -------------------------------
-   AZURE MYSQL CONFIG (NO SSL)
--------------------------------- */
-$azure = [
-    'host' => 'cloudconnectserver.mysql.database.azure.com',
-    'db'   => 'cloudconnect',
-    'user' => 'cloudadmin@cloudconnectserver',
-    'pass' => 'admin@123',
-    'dsn'  => "mysql:host=cloudconnectserver.mysql.database.azure.com;
-               dbname=cloudconnect;
-               charset=utf8mb4;
-               sslmode=DISABLED"
-];
+/* Detect Azure environment */
+$isAzure = isset($_SERVER['WEBSITE_INSTANCE_ID']);
 
-/* -------------------------------
-   LOCALHOST CONFIG
--------------------------------- */
-$local = [
-    'dsn'  => "mysql:host=localhost;dbname=cloudconnect;charset=utf8mb4",
-    'user' => 'root',
-    'pass' => ''
-];
-
-/* -------------------------------
-   CONNECTION LOGIC
--------------------------------- */
 try {
-    // Try Azure first
-    $pdo = new PDO(
-        $azure['dsn'],
-        $azure['user'],
-        $azure['pass'],
-        $options
-    );
-} catch (PDOException $e) {
 
-    try {
-        // Fallback to Localhost
+    if ($isAzure) {
+        // AZURE MYSQL
         $pdo = new PDO(
-            $local['dsn'],
-            $local['user'],
-            $local['pass'],
+            "mysql:host=cloudconnectserver.mysql.database.azure.com;dbname=cloudconnect;charset=utf8mb4",
+            "cloudadmin@cloudconnectserver",
+            "admin@123",
             $options
         );
-    } catch (PDOException $e2) {
-        die("Database connection failed. Please try again later.");
+    } else {
+        // LOCALHOST (XAMPP)
+        $pdo = new PDO(
+            "mysql:host=localhost;dbname=cloudconnect;charset=utf8mb4",
+            "root",
+            "",
+            $options
+        );
     }
+
+} catch (PDOException $e) {
+    error_log("DB ERROR: " . $e->getMessage());
+    die("Database connection failed. Please try again later.");
 }
