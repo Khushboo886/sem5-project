@@ -28,31 +28,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Name, Email and Password are required.";
     }
 
-    $chk = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-    $chk->execute([$email]);
+  $chk = $db->prepare("SELECT id FROM users WHERE email = ?");
+  $chk->execute([$email]);
     if ($chk->fetch()) {
         $errors[] = "This email is already registered.";
     }
 
     if (!$errors) {
-        try {
-            $pdo->beginTransaction();
+    try {
+      $db->beginTransaction();
 
             $hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("
-                INSERT INTO users (company_id, name, email, password, role)
-                VALUES (?, ?, ?, ?, 'Employee')
-            ");
-            $stmt->execute([
-                $_SESSION['company_id'],
-                $name,
-                $email,
-                $hash
-            ]);
 
-            $userId = $pdo->lastInsertId();
+      $stmt = $db->prepare(""
+        INSERT INTO users (company_id, name, email, password, role)
+        VALUES (?, ?, ?, ?, 'Employee')
+      """);
+      $stmt->execute([
+        $_SESSION['company_id'],
+        $name,
+        $email,
+        $hash
+      ]);
 
-            $stmt = $pdo->prepare("
+      $userId = $db->lastInsertId();
+
+      $stmt = $db->prepare(""
                 INSERT INTO employee_details
                 (user_id, employee_name, employee_id, department, position, join_date, phone, address, emergency_contact, emergency_phone)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -70,11 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $emergency_phone ?: null
             ]);
 
-            $pdo->commit();
+            $db->commit();
             $success = true;
 
-        } catch (Exception $e) {
-            $pdo->rollBack();
+    } catch (Exception $e) {
+      $db->rollBack();
             $errors[] = "Something went wrong. Please try again.";
         }
     }
@@ -87,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Add Employee — CloudConnect</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<link rel="stylesheet" href="/cloudconnect/assets/css/theme.css">
+<link rel="stylesheet" href="/assets/css/theme.css">
 
 <style>
 :root{
@@ -311,6 +312,6 @@ footer{
   </div>
 </main>
 
-<script src="/cloudconnect/assets/js/theme.js"></script>
+<script src="/assets/js/theme.js"></script>
 </body>
 </html>

@@ -15,11 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $reason     = trim($_POST['reason'] ?? '');
 
     if ($leave_type && $start_date && $end_date && $reason) {
-        $stmt = $pdo->prepare("
-            INSERT INTO leaves (user_id, leave_type, start_date, end_date, reason, status)
-            VALUES (?, ?, ?, ?, ?, 'pending')
-        ");
-        $stmt->execute([$user_id, $leave_type, $start_date, $end_date, $reason]);
+    $stmt = $db->prepare(""
+      INSERT INTO leaves (user_id, leave_type, start_date, end_date, reason, status)
+      VALUES (?, ?, ?, ?, ?, 'pending')
+    """);
+    $stmt->execute([$user_id, $leave_type, $start_date, $end_date, $reason]);
         header("Location: leaves.php");
         exit;
     } else {
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch Leave History
-$stmt = $pdo->prepare("SELECT * FROM leaves WHERE user_id = ? ORDER BY id DESC");
+$stmt = $db->prepare("SELECT * FROM leaves WHERE user_id = ? ORDER BY id DESC");
 $stmt->execute([$user_id]);
 $leaves = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>

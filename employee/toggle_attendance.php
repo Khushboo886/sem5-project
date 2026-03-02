@@ -19,7 +19,7 @@ $current_time = date('H:i:s'); // for comparison
 
 try {
     // Check if already have an attendance record for today
-    $stmt = $pdo->prepare("SELECT * FROM attendance WHERE user_id = ? AND date = ?");
+    $stmt = $db->prepare("SELECT * FROM attendance WHERE user_id = ? AND date = ?");
     $stmt->execute([$user_id, $today_date]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -30,7 +30,7 @@ try {
             ? 'Late arrival' 
             : 'On time';
 
-        $ins = $pdo->prepare("
+        $ins = $db->prepare("
             INSERT INTO attendance (user_id, date, check_in, status, remarks, created_at)
             VALUES (?, ?, ?, 'present', ?, ?)
         ");
@@ -64,7 +64,7 @@ try {
             $status = 'half-day';
         }
 
-        $upd = $pdo->prepare("
+        $upd = $db->prepare("
             UPDATE attendance
             SET check_out = ?, remarks = ?, status = ?, created_at = ?
             WHERE id = ?

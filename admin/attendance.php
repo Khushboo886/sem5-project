@@ -25,7 +25,7 @@ if ($userFilter) {
 }
 
 // Fetch attendance
-$stmt = $pdo->prepare("
+$stmt = $db->prepare(""
   SELECT 
     u.name AS employee_name,
     a.date,
@@ -42,7 +42,7 @@ $stmt->execute($params);
 $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Employees for filter dropdown
-$empStmt = $pdo->prepare("
+$empStmt = $db->prepare(""
   SELECT id, name 
   FROM users 
   WHERE company_id = ? AND role = 'Employee'

@@ -6,7 +6,7 @@ include '../includes/header.php';
 
 function e($v){ return htmlspecialchars($v ?? '', ENT_QUOTES); }
 
-$stmt = $pdo->prepare("
+$stmt = $db->prepare(""
   SELECT u.id, u.name, u.email, ed.position
   FROM users u
   LEFT JOIN employee_details ed ON ed.user_id = u.id

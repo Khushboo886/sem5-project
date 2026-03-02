@@ -20,14 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Please enter a valid 6-digit OTP.";
     } else {
 
-        $stmt = $pdo->prepare("
+        $stmt = $db->prepare(""
             SELECT id
             FROM users
             WHERE email = ?
               AND reset_otp = ?
-              AND otp_expiry > NOW()
+              AND otp_expiry > datetime('now')
             LIMIT 1
-        ");
+        """);
         $stmt->execute([$email, $otp]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 

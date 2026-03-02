@@ -23,17 +23,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
     }
 
     if (!$errors) {
-        $stmt = $pdo->prepare("
-            UPDATE companies 
-            SET name = ?, industry = ?, website = ?
-            WHERE id = ?
-        ");
-        $stmt->execute([
-            $company_name,
-            $industry ?: null,
-            $website ?: null,
-            $_SESSION['company_id']
-        ]);
+    $stmt = $db->prepare("
+      UPDATE companies 
+      SET name = ?, industry = ?, website = ?
+      WHERE id = ?
+    ");
+    $stmt->execute([
+      $company_name,
+      $industry ?: null,
+      $website ?: null,
+      $_SESSION['company_id']
+    ]);
         $success = "Settings updated successfully.";
     }
 }
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
 /* -------------------------------------------------
    FETCH COMPANY DATA
 ------------------------------------------------- */
-$stmt = $pdo->prepare("SELECT * FROM companies WHERE id = ?");
+$stmt = $db->prepare("SELECT * FROM companies WHERE id = ?");
 $stmt->execute([$_SESSION['company_id']]);
 $company = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>

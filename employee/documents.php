@@ -10,16 +10,16 @@ $company_id = $_SESSION['company_id'] ?? null;
 $documents = [];
 
 if ($company_id) {
-    $stmt = $pdo->prepare("
-        SELECT d.*, u.name AS uploader_name
-        FROM documents d
-        LEFT JOIN users u ON d.uploaded_by = u.id
-        WHERE d.company_id = ?
-          AND (d.access_level = 'public' OR d.uploaded_by = ?)
-        ORDER BY d.created_at DESC
-    ");
-    $stmt->execute([$company_id, $user_id]);
-    $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $db->prepare(""
+                SELECT d.*, u.name AS uploader_name
+                FROM documents d
+                LEFT JOIN users u ON d.uploaded_by = u.id
+                WHERE d.company_id = ?
+                    AND (d.access_level = 'public' OR d.uploaded_by = ?)
+                ORDER BY d.created_at DESC
+        """);
+        $stmt->execute([$company_id, $user_id]);
+        $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>
 

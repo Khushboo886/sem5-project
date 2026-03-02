@@ -7,22 +7,22 @@ include '../includes/header.php';
 $user_id = $_SESSION['user_id'];
 
 // Fetch user basic info
-$stmt = $pdo->prepare("
+$stmt = $db->prepare("""
     SELECT id, company_id, name, email, created_at 
     FROM users 
     WHERE id = ? 
     LIMIT 1
-");
+""");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Fetch employee details
-$stmt = $pdo->prepare("
+$stmt = $db->prepare("""
     SELECT * 
     FROM employee_details 
     WHERE user_id = ? 
     LIMIT 1
-");
+""");
 $stmt->execute([$user_id]);
 $details = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>

@@ -1,37 +1,19 @@
 <?php
 /* ============================================
-   CloudConnect Database Connection (FINAL)
+   CloudConnect SQLite Database (Azure Free)
 ============================================ */
 
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-];
-
-/* Detect Azure environment */
-$isAzure = isset($_SERVER['WEBSITE_INSTANCE_ID']);
-
 try {
-
-    if ($isAzure) {
-        // AZURE MYSQL
-        $pdo = new PDO(
-            "mysql:host=cloudconnectserver.mysql.database.azure.com;dbname=cloudconnect;charset=utf8mb4",
-            "cloudadmin@cloudconnectserver",
-            "admin@123",
-            $options
-        );
-    } else {
-        // LOCALHOST (XAMPP)
-        $pdo = new PDO(
-            "mysql:host=localhost;dbname=cloudconnect;charset=utf8mb4",
-            "root",
-            "",
-            $options
-        );
-    }
-
+    $db = new PDO(
+        "sqlite:" . __DIR__ . "/../data.sqlite",
+        null,
+        null,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
 } catch (PDOException $e) {
     error_log("DB ERROR: " . $e->getMessage());
-    die("Database connection failed. Please try again later.");
+    die("Database connection failed.");
 }

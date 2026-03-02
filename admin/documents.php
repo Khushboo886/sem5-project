@@ -15,16 +15,16 @@ $success = '';
 if (isset($_GET['delete_id'])) {
     $id = (int) $_GET['delete_id'];
 
-    $stmt = $pdo->prepare("SELECT file_path FROM documents WHERE id=? AND company_id=?");
-    $stmt->execute([$id, $_SESSION['company_id']]);
-    $doc = $stmt->fetch();
+  $stmt = $db->prepare("SELECT file_path FROM documents WHERE id=? AND company_id=?");
+  $stmt->execute([$id, $_SESSION['company_id']]);
+  $doc = $stmt->fetch();
 
     if ($doc) {
         $path = '../uploads/documents/' . $doc['file_path'];
         if (file_exists($path)) unlink($path);
 
-        $del = $pdo->prepare("DELETE FROM documents WHERE id=? AND company_id=?");
-        $del->execute([$id, $_SESSION['company_id']]);
+  $del = $db->prepare("DELETE FROM documents WHERE id=? AND company_id=?");
+  $del->execute([$id, $_SESSION['company_id']]);
         $success = "Document deleted successfully.";
     } else {
         $errors[] = "Document not found or access denied.";
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload'])) {
         $type = pathinfo($name, PATHINFO_EXTENSION);
 
         if (move_uploaded_file($_FILES['file']['tmp_name'], $dir.$name)) {
-            $stmt = $pdo->prepare("
+      $stmt = $db->prepare(""
                 INSERT INTO documents
                 (title, description, file_path, file_type, uploaded_by, company_id, access_level)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -76,13 +76,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload'])) {
 /* ------------------------------------------------------
    FETCH DOCUMENTS
 ------------------------------------------------------ */
-$stmt = $pdo->prepare("
-    SELECT d.*, u.name AS uploader
-    FROM documents d
-    JOIN users u ON u.id = d.uploaded_by
-    WHERE d.company_id = ?
-    ORDER BY d.created_at DESC
-");
+$stmt = $db->prepare(""
+  SELECT d.*, u.name AS uploader
+  FROM documents d
+  JOIN users u ON u.id = d.uploaded_by
+  WHERE d.company_id = ?
+  ORDER BY d.created_at DESC
+""");
 $stmt->execute([$_SESSION['company_id']]);
 $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
