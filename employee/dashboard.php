@@ -10,44 +10,44 @@ $name = $_SESSION['name'] ?? 'Employee';
 /* ===========================
    ATTENDANCE SUMMARY
 =========================== */
-$attStmt = $pdo->prepare("
+$attStmt = $db->prepare("""
     SELECT 
       COUNT(*) AS total,
-      SUM(status='present') AS present,
-      SUM(status='late') AS late,
-      SUM(status='absent') AS absent
+      SUM(CASE WHEN status='present' THEN 1 ELSE 0 END) AS present,
+      SUM(CASE WHEN status='late' THEN 1 ELSE 0 END) AS late,
+      SUM(CASE WHEN status='absent' THEN 1 ELSE 0 END) AS absent
     FROM attendance
     WHERE user_id = ?
-");
+""");
 $attStmt->execute([$user_id]);
 $attendance = $attStmt->fetch();
 
 /* ===========================
    LEAVE SUMMARY
 =========================== */
-$leaveStmt = $pdo->prepare("
+$leaveStmt = $db->prepare("""
     SELECT
-      SUM(status='approved') AS approved,
-      SUM(status='pending')  AS pending,
-      SUM(status='rejected') AS rejected
+      SUM(CASE WHEN status='approved' THEN 1 ELSE 0 END) AS approved,
+      SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END)  AS pending,
+      SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END) AS rejected
     FROM leaves
     WHERE user_id = ?
-");
+""");
 $leaveStmt->execute([$user_id]);
 $leaves = $leaveStmt->fetch();
 /* ===========================
    ACTIVE ANNOUNCEMENTS
 =========================== */
-$annStmt = $pdo->prepare("
+$annStmt = $db->prepare("""
   SELECT title, content, priority
   FROM announcements
   WHERE company_id = ?
-    AND (start_date IS NULL OR start_date <= CURDATE())
-    AND (end_date IS NULL OR end_date >= CURDATE())
+    AND (start_date IS NULL OR start_date <= date('now'))
+    AND (end_date IS NULL OR end_date >= date('now'))
   ORDER BY 
-    FIELD(priority,'high','medium','low'),
+    CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END,
     created_at DESC
-");
+""");
 $annStmt->execute([$company_id]);
 $announcements = $annStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>

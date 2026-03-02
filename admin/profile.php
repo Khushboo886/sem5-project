@@ -12,11 +12,11 @@ $success = '';
 /* ===============================
    FETCH ADMIN DATA
 ================================ */
-$stmt = $pdo->prepare("
+$stmt = $db->prepare(""
   SELECT id, name, email, created_at
   FROM users
   WHERE id = ? AND role = 'Admin'
-");
+""");
 $stmt->execute([$_SESSION['user_id']]);
 $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -38,14 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 
   // check email duplicate (excluding self)
-  $chk = $pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+  $chk = $db->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
   $chk->execute([$email, $_SESSION['user_id']]);
   if ($chk->fetch()) {
     $errors[] = "This email is already in use.";
   }
 
   if (!$errors) {
-    $upd = $pdo->prepare("
+    $upd = $db->prepare("
       UPDATE users
       SET name = ?, email = ?
       WHERE id = ?

@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   } else {
     $hash = password_hash($password, PASSWORD_DEFAULT);
 
-    $stmt = $pdo->prepare(
+    $stmt = $db->prepare(
       "UPDATE users 
        SET password=?, reset_otp=NULL, otp_expiry=NULL 
        WHERE email=?"

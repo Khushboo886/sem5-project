@@ -14,8 +14,8 @@ if (!$userId) {
 
 /* ===============================
    FETCH EMPLOYEE DATA
-   =============================== */
-$stmt = $pdo->prepare("
+*/
+$stmt = $db->prepare(""
   SELECT 
     u.id,
     u.name,
@@ -66,12 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$errors) {
         try {
-            $pdo->beginTransaction();
+      $db->beginTransaction();
 
-            $pdo->prepare("UPDATE users SET name=?, email=? WHERE id=? AND company_id=?")
+      $db->prepare("UPDATE users SET name=?, email=? WHERE id=? AND company_id=?")
                 ->execute([$name, $email, $userId, $_SESSION['company_id']]);
 
-            $pdo->prepare("
+      $db->prepare("
               UPDATE employee_details SET
                 employee_name=?,
                 employee_id=?,
@@ -96,10 +96,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $userId
             ]);
 
-            $pdo->commit();
+      $db->commit();
             $success = "Employee updated successfully.";
         } catch (Exception $ex) {
-            $pdo->rollBack();
+      $db->rollBack();
             $errors[] = "Error updating employee.";
         }
     }

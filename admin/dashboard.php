@@ -12,71 +12,68 @@ $companyId = $_SESSION['company_id'];
 ================================ */
 
 // 1️⃣ Total Employees
-$stmt = $pdo->prepare("
+$stmt = $db->prepare("""
   SELECT COUNT(*) 
   FROM users 
   WHERE company_id = ? AND role = 'Employee'
-");
+""");
 $stmt->execute([$companyId]);
 $totalEmployees = (int) $stmt->fetchColumn();
 
 // 2️⃣ Active Attendance (Today)
-$stmt = $pdo->prepare("
+$stmt = $db->prepare("""
   SELECT COUNT(*) 
   FROM attendance a
   INNER JOIN users u ON u.id = a.user_id
   WHERE u.company_id = ?
     AND a.status = 'present'
-    AND a.date = CURDATE()
-");
+    AND a.date = date('now')
+""");
 $stmt->execute([$companyId]);
 $activeAttendance = (int) $stmt->fetchColumn();
 
 // 3️⃣ Pending Leave Requests
-$stmt = $pdo->prepare("
+$stmt = $db->prepare("""
   SELECT COUNT(*) 
   FROM leaves l
   INNER JOIN users u ON u.id = l.user_id
   WHERE u.company_id = ?
     AND l.status = 'pending'
-");
+""");
 $stmt->execute([$companyId]);
 $pendingLeaves = (int) $stmt->fetchColumn();
 
 // 4️⃣ Documents Shared
-$stmt = $pdo->prepare("
+$stmt = $db->prepare("""
   SELECT COUNT(*) 
   FROM documents 
   WHERE company_id = ?
-");
+""");
 $stmt->execute([$companyId]);
 $documentsShared = (int) $stmt->fetchColumn();
 
 // 5️⃣ Active Announcements (Date-based)
-$stmt = $pdo->prepare("
+$stmt = $db->prepare("""
   SELECT COUNT(*) 
   FROM announcements
   WHERE company_id = ?
-    AND (start_date IS NULL OR start_date <= CURDATE())
-    AND (end_date IS NULL OR end_date >= CURDATE())
-");
+    AND (start_date IS NULL OR start_date <= date('now'))
+    AND (end_date IS NULL OR end_date >= date('now'))
+""");
 $stmt->execute([$companyId]);
 $activeAnnouncements = (int) $stmt->fetchColumn();
 
 /* ===============================
    RECENT EMPLOYEES
 ================================ */
-$stmt = $pdo->prepare("
+$stmt = $db->prepare("""
   SELECT id, name, role, created_at
   FROM users
   WHERE company_id = ?
     AND role = 'Employee'
   ORDER BY id DESC
   LIMIT 5
-");
-$stmt->execute([$companyId]);
-$recentUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+""");
 $stmt->execute([$companyId]);
 $recentUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>

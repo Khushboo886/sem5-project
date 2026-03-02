@@ -13,12 +13,12 @@ function snippet($text, $len = 160) {
 }
 
 /* ---------- FETCH ANNOUNCEMENTS ---------- */
-$stmt = $pdo->prepare("
-    SELECT title, content, created_at, priority
-    FROM announcements
-    WHERE company_id = ?
-    ORDER BY created_at DESC
-");
+$stmt = $db->prepare("""
+  SELECT title, content, created_at, priority
+  FROM announcements
+  WHERE company_id = ?
+  ORDER BY created_at DESC
+""");
 $stmt->execute([$company_id]);
 $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>

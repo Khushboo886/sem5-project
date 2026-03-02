@@ -12,18 +12,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$email) {
         $errors[] = "Please enter your registered email.";
     } else {
-        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
+  $stmt = $db->prepare("SELECT id FROM users WHERE email = ?");
+  $stmt->execute([$email]);
+  $user = $stmt->fetch();
 
         if ($user) {
             $otp = random_int(100000, 999999);
             $expiry = date('Y-m-d H:i:s', strtotime('+10 minutes'));
 
-            $stmt = $pdo->prepare(
-                "UPDATE users SET reset_otp = ?, otp_expiry = ? WHERE email = ?"
-            );
-            $stmt->execute([$otp, $expiry, $email]);
+      $stmt = $db->prepare(
+        "UPDATE users SET reset_otp = ?, otp_expiry = ? WHERE email = ?"
+      );
+      $stmt->execute([$otp, $expiry, $email]);
 
             mail(
                 $email,

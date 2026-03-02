@@ -23,20 +23,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$title || !$content) {
         $errors[] = "Title and content are required.";
     } else {
-        $stmt = $pdo->prepare("
-            INSERT INTO announcements
-            (title, content, company_id, created_by, priority, start_date, end_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ");
-        $stmt->execute([
-            $title,
-            $content,
-            $_SESSION['company_id'],
-            $_SESSION['user_id'],
-            $priority,
-            $start_date,
-            $end_date
-        ]);
+    $stmt = $db->prepare(""
+      INSERT INTO announcements
+      (title, content, company_id, created_by, priority, start_date, end_date)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    """);
+    $stmt->execute([
+      $title,
+      $content,
+      $_SESSION['company_id'],
+      $_SESSION['user_id'],
+      $priority,
+      $start_date,
+      $end_date
+    ]);
         $success = "Announcement published successfully.";
     }
 }
@@ -44,13 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /* ===============================
    FETCH ANNOUNCEMENTS
 ================================ */
-$stmt = $pdo->prepare("
-    SELECT a.*, u.name AS creator
-    FROM announcements a
-    JOIN users u ON a.created_by = u.id
-    WHERE a.company_id = ?
-    ORDER BY a.created_at DESC
-");
+$stmt = $db->prepare(""
+  SELECT a.*, u.name AS creator
+  FROM announcements a
+  JOIN users u ON a.created_by = u.id
+  WHERE a.company_id = ?
+  ORDER BY a.created_at DESC
+""");
 $stmt->execute([$_SESSION['company_id']]);
 $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>

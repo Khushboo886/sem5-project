@@ -20,26 +20,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        $pdo->beginTransaction();
-        try {
-            $stmt = $pdo->prepare(
-                "INSERT INTO companies (name, industry, website) VALUES (?, ?, ?)"
-            );
-            $stmt->execute([$company_name, $industry, $website]);
-            $company_id = $pdo->lastInsertId();
+    $db->beginTransaction();
+    try {
+      $stmt = $db->prepare(
+        "INSERT INTO companies (name, industry, website) VALUES (?, ?, ?)"
+      );
+      $stmt->execute([$company_name, $industry, $website]);
+      $company_id = $db->lastInsertId();
 
-            $hash = password_hash($admin_password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare(
-                "INSERT INTO users (company_id, name, email, password, role)
-                 VALUES (?, ?, ?, ?, 'Admin')"
-            );
-            $stmt->execute([$company_id, $admin_name, $admin_email, $hash]);
+      $hash = password_hash($admin_password, PASSWORD_DEFAULT);
+      $stmt = $db->prepare(
+        "INSERT INTO users (company_id, name, email, password, role)
+         VALUES (?, ?, ?, ?, 'Admin')"
+      );
+      $stmt->execute([$company_id, $admin_name, $admin_email, $hash]);
 
-            $pdo->commit();
+      $db->commit();
             header('Location: login.php?registered=1');
             exit();
         } catch (Exception $e) {
-            $pdo->rollBack();
+      $db->rollBack();
             $errors[] = "Registration failed. Please try again.";
         }
     }

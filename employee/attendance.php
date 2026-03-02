@@ -17,11 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($action === 'clock_in') {
-        $check = $pdo->prepare("SELECT id FROM attendance WHERE user_id=? AND date=?");
+        $check = $db->prepare("SELECT id FROM attendance WHERE user_id=? AND date=?");
         $check->execute([$user_id, $currentDate]);
 
         if (!$check->fetch()) {
-            $pdo->prepare(
+            $db->prepare(
                 "INSERT INTO attendance (user_id, date, check_in, status)
                  VALUES (?, ?, ?, 'present')"
             )->execute([$user_id, $currentDate, $currentTime]);
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'clock_out') {
-        $stmt = $pdo->prepare(
+        $stmt = $db->prepare(
             "SELECT check_in FROM attendance WHERE user_id=? AND date=?"
         );
         $stmt->execute([$user_id, $currentDate]);
@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $remarks = 'Left early';
             }
 
-            $pdo->prepare(
+            $db->prepare(
                 "UPDATE attendance
                  SET check_out=?, status=?, remarks=?
                  WHERE user_id=? AND date=?"
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /* ===============================
    FETCH TODAY STATUS
 ================================ */
-$stmt = $pdo->prepare(
+$stmt = $db->prepare(
     "SELECT * FROM attendance WHERE user_id=? AND date=?"
 );
 $stmt->execute([$user_id, $currentDate]);
@@ -77,7 +77,7 @@ $isClockedIn = ($today && !$today['check_out']);
 /* ===============================
    FETCH HISTORY
 ================================ */
-$stmt = $pdo->prepare(
+$stmt = $db->prepare(
     "SELECT * FROM attendance WHERE user_id=? ORDER BY date DESC"
 );
 $stmt->execute([$user_id]);

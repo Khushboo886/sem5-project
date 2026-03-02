@@ -19,7 +19,7 @@ if ($statusFilter) {
 }
 
 // Fetch leaves
-$stmt = $pdo->prepare("
+$stmt = $db->prepare(""
   SELECT 
     l.id,
     u.name AS employee_name,

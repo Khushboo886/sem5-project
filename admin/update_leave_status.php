@@ -11,7 +11,7 @@ if (!$id || !in_array($status, ['approved', 'rejected'])) {
     exit;
 }
 
-$stmt = $pdo->prepare("
+$stmt = $db->prepare(""
     UPDATE leaves
     SET status = ?
     WHERE id = ? AND status = 'pending'
