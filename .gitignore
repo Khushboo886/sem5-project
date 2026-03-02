@@ -4,3 +4,4 @@ vendor/
 .env
 assests/uploads/*
 !assests/uploads/.gitkeep
+*.sqlite
